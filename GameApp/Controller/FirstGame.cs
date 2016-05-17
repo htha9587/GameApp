@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Storage;
 using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Input.Touch;
 using GameApp.Model;
 
 namespace GameApp.Controller
@@ -16,6 +17,14 @@ namespace GameApp.Controller
 		GraphicsDeviceManager graphics;
 		SpriteBatch spriteBatch;
 		private Player player; //Represents player.
+		//Keyboard states to determine pressing.
+		KeyboardState currentKeyboardState;
+		KeyboardState previousKeyboardState;
+		//Gamepad states to determine pressing.
+		GamePadState currentGamePadState;
+		GamePadState previousGamePadState;
+		// Player movement speed.
+		float playerMoveSpeed;
 
 		public FirstGame ()
 		{
@@ -36,6 +45,10 @@ namespace GameApp.Controller
 			base.Initialize ();
 			//Initializes player class.
 			player = new Player();
+			//Sets constant move speed.
+			playerMoveSpeed = 8.0f;
+			//Enable FreeDrag gesture.
+			TouchPanel.EnabledGestures = GestureType.FreeDrag;
 		}
 
 		/// <summary>
@@ -69,10 +82,50 @@ namespace GameApp.Controller
 				Exit ();
 			#endif
             
-			// TODO: Add your update logic here
-            
+			//Saves previous keyboard state and gamepad to determine user presses.
+			previousGamePadState = currentGamePadState;
+			previousKeyboardState = currentKeyboardState;
+            // Reads the current state and stores it.
+			currentKeyboardState = Keyboard.GetState();
+			currentGamePadState = GamePad.GetState(PlayerIndex.One);
+				//Updates player.
+				UpdatePlayer(gameTime);
 			base.Update (gameTime);
 		}
+
+		private void UpdatePlayer(GameTime gameTime)
+		{
+			//Get thumbstick controls.
+			player.Position.X += currentGamePadState.ThumbSticks.Left.X *playerMoveSpeed;
+			player.Position.Y -= currentGamePadState.ThumbSticks.Left.Y *playerMoveSpeed;
+
+			// Use the Keyboard / Dpad
+			if (currentKeyboardState.IsKeyDown(Keys.Left) ||
+				currentGamePadState.DPad.Left == ButtonState.Pressed)
+			{
+				player.Position.X -= playerMoveSpeed;
+			}
+			if (currentKeyboardState.IsKeyDown(Keys.Right) ||
+				currentGamePadState.DPad.Right == ButtonState.Pressed)
+			{
+				player.Position.X += playerMoveSpeed;
+			}
+			if (currentKeyboardState.IsKeyDown(Keys.Up) ||
+				currentGamePadState.DPad.Up == ButtonState.Pressed)
+			{
+				player.Position.Y -= playerMoveSpeed;
+			}
+			if (currentKeyboardState.IsKeyDown(Keys.Down) ||
+				currentGamePadState.DPad.Down == ButtonState.Pressed)
+			{
+				player.Position.Y += playerMoveSpeed;
+			}
+
+			// Make sure that the player does not go out of bounds
+			player.Position.X = MathHelper.Clamp(player.Position.X, 0,GraphicsDevice.Viewport.Width - player.Width);
+			player.Position.Y = MathHelper.Clamp(player.Position.Y, 0,GraphicsDevice.Viewport.Height - player.Height);
+		}
+
 
 		/// <summary>
 		/// This is called when the game should draw itself.
