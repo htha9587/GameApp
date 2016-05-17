@@ -49,6 +49,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Controller\Program.cs" />
     <Compile Include="Controller\FirstGame.cs" />
+    <Compile Include="Model\Player.cs" />
+    <Compile Include="Model\Game.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Icon.png" />

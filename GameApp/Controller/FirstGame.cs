@@ -4,18 +4,20 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Storage;
 using Microsoft.Xna.Framework.Input;
+using GameApp.Model;
 
 namespace GameApp.Controller
 {
 	/// <summary>
 	/// This is the main type for your game.
 	/// </summary>
-	public class Game1 : Game
+	public class FirstGame : Microsoft.Xna.Framework.Game
 	{
 		GraphicsDeviceManager graphics;
 		SpriteBatch spriteBatch;
+		private Player player; //Represents player.
 
-		public Game1 ()
+		public FirstGame ()
 		{
 			graphics = new GraphicsDeviceManager (this);
 			Content.RootDirectory = "Content";
@@ -32,6 +34,8 @@ namespace GameApp.Controller
 			// TODO: Add your initialization logic here
             
 			base.Initialize ();
+			//Initializes player class.
+			player = new Player();
 		}
 
 		/// <summary>
@@ -42,6 +46,11 @@ namespace GameApp.Controller
 		{
 			// Create a new SpriteBatch, which can be used to draw textures.
 			spriteBatch = new SpriteBatch (GraphicsDevice);
+			//Loads the resources.
+			Vector2 playerPosition = new
+				Vector2 (GraphicsDevice.Viewport.TitleSafeArea.X, GraphicsDevice.Viewport.TitleSafeArea.Y +
+			                         GraphicsDevice.Viewport.TitleSafeArea.Height / 2);
+				player.Initialize(Content.Load<Texture2D>("player"), playerPosition);
 
 			//TODO: use this.Content to load your game content here 
 		}
@@ -72,8 +81,14 @@ namespace GameApp.Controller
 		protected override void Draw (GameTime gameTime)
 		{
 			graphics.GraphicsDevice.Clear (Color.CornflowerBlue);
+			//Drawing starts. 
+			spriteBatch.Begin();
+			// Draws player.
+			player.Draw(spriteBatch);
+			// Stops drawing.
+			spriteBatch.End();
             
-			//TODO: Add your drawing code here
+			//TODO: Add your drawing co		de here
             
 			base.Draw (gameTime);
 		}
