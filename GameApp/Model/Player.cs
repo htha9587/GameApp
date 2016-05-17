@@ -6,40 +6,47 @@ namespace GameApp.Model
 {
 	public class Player
 	{
-		public Texture2D PlayerTexture; // Animation representing player.
+		
+		public Animation PlayerAnimation;
 		public Vector2 Position; // Represents player position on the left side of the screen.
 		public bool Active; // Player state.
 		public int Health; // Hit point amount.
 		public int Width // Gets width of ship.
+		//Animation representing player.
+
 		{
-			get { return PlayerTexture.Width; }
+			get { return PlayerAnimation.FrameWidth; }
 		}
 
 		public int Height // Gets height of ship.
 		{
-			get { return PlayerTexture.Height; }
+			get { return PlayerAnimation.FrameHeight; }
 		}
 
-		public void Initialize(Texture2D texture, Vector2 position)
+		// Initialize the player
+		public void Initialize(Animation animation, Vector2 position)
 		{
-			PlayerTexture = texture;
-			//Sets position of the player.
+			PlayerAnimation = animation;
+
+			// Set the starting position of the player around the middle of the screen and to the back
 			Position = position;
-			// Sets player to be active.
+
+			// Set the player to be active
 			Active = true;
-			//Sets player health.
+
+			// Set the player health
 			Health = 100;
 		}
 
-		public void Update()
+		public void Update(GameTime gameTime)
 		{
-
+			PlayerAnimation.Position = Position;
+			PlayerAnimation.Update (gameTime);
 		}
 
 		public void Draw(SpriteBatch spriteBatch)
 		{
-			spriteBatch.Draw (PlayerTexture, Position, null, Color.White, 0f, Vector2.Zero, 1f,
-				SpriteEffects.None, 0f);
+			PlayerAnimation.Draw(spriteBatch);
 		}
 
 	}

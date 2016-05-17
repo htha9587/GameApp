@@ -51,6 +51,7 @@
     <Compile Include="Controller\FirstGame.cs" />
     <Compile Include="Model\Player.cs" />
     <Compile Include="Model\Game.cs" />
+    <Compile Include="View\Animation.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Icon.png" />
