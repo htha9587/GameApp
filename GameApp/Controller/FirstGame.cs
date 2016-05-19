@@ -4,6 +4,8 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Storage;
 using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework.Media;
 using GameApp.Model;
 using GameApp.View;
 namespace GameApp.Controller
@@ -34,7 +36,18 @@ namespace GameApp.Controller
 		// Enemies
 		Texture2D enemyTexture;
 		List<Enemy> enemies;
+		// The sound that is played when a laser is fired
+		SoundEffect laserSound;
 
+		// The sound used when the player or an enemy dies
+		SoundEffect explosionSound;
+
+		// The music played during gameplay
+		Song gameplayMusic;
+		//Number that holds the player score
+		int score;
+		// The font used to display UI elements
+		SpriteFont font;
 		// The rate at which the enemies appear
 		TimeSpan enemySpawnTime;
 		TimeSpan previousSpawnTime;
@@ -88,6 +101,7 @@ namespace GameApp.Controller
 			// Set the laser to fire every quarter second
 			fireTime = TimeSpan.FromSeconds(.15f);
 			explosions = new List<Animation>();
+			score = 0;
 		}
 
 		/// <summary>
@@ -113,6 +127,16 @@ namespace GameApp.Controller
 			mainBackground = Content.Load<Texture2D>("mainbackground");
 			projectileTexture = Content.Load<Texture2D>("laser");
 			explosionTexture = Content.Load<Texture2D>("explosion");
+			// Load the music
+			gameplayMusic = Content.Load<Song>("sound/gameMusic");
+
+			// Load the laser and explosion sound effect
+			laserSound = Content.Load<SoundEffect>("sound/laserFire");
+			explosionSound = Content.Load<SoundEffect>("sound/explosion");
+
+			// Start the music right away
+			font = Content.Load<SpriteFont>("gameFont");
+			PlayMusic(gameplayMusic);
 
 			//TODO: use this.Content to load your game content here 
 		}
@@ -179,6 +203,12 @@ namespace GameApp.Controller
 			{
 				player.Position.Y += playerMoveSpeed;
 			}
+			// reset score if player health goes to zero
+			if (player.Health <= 0)
+			{
+				player.Health = 100;
+				score = 0;
+			}
 
 			// Make sure that the player does not go out of bounds
 			player.Position.X = MathHelper.Clamp(player.Position.X, 0,GraphicsDevice.Viewport.Width - player.Width);
@@ -191,6 +221,8 @@ namespace GameApp.Controller
 
 				// Add the projectile, but add it to the front and center of the player
 				AddProjectile(player.Position + new Vector2(player.Width / 2, 0));
+				// Play the laser sound
+				laserSound.Play();
 			}
 		}
 
@@ -226,6 +258,10 @@ namespace GameApp.Controller
 				explosions[i].Draw(spriteBatch);
 			}
 			spriteBatch.End();
+			// Draw the score
+			spriteBatch.DrawString(font, "score: " + score, new Vector2(GraphicsDevice.Viewport.TitleSafeArea.X, GraphicsDevice.Viewport.TitleSafeArea.Y), Color.White);
+			// Draw the player health
+			spriteBatch.DrawString(font, "health: " + player.Health, new Vector2(GraphicsDevice.Viewport.TitleSafeArea.X, GraphicsDevice.Viewport.TitleSafeArea.Y + 30), Color.White);
 			// Draw the Projectiles
 
             
@@ -337,6 +373,20 @@ namespace GameApp.Controller
 			explosion.Initialize(explosionTexture,position, 134, 134, 12, 45, Color.White, 1f,false);
 			explosions.Add(explosion);
 		}
+		private void PlayMusic(Song song)
+		{
+			// Due to the way the MediaPlayer plays music,
+			// we have to catch the exception. Music will play when the game is not tethered
+			try
+			{
+				// Play the music
+				MediaPlayer.Play(song);
+
+				// Loop the currently playing song
+				MediaPlayer.IsRepeating = true;
+			}
+			catch { }
+		}
 		private void UpdateExplosions(GameTime gameTime)
 		{
 			for (int i = explosions.Count - 1; i >= 0; i--)
@@ -363,6 +413,8 @@ namespace GameApp.Controller
 
 				// Add an Enemy
 				AddEnemy();
+				explosionSound.Play();
+				score += enemies[i].Value;
 			}
 
 			// Update the Enemies
