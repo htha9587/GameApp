@@ -1,1 +1,17 @@
-﻿<Properties StartupItem="GameApp/GameApp.csproj" />
+﻿<Properties StartupItem="GameApp/GameApp.csproj">
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|x86" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="GameApp/View/parallaxingbackground.cs">
+    <Files>
+      <File FileName="GameApp/Controller/FirstGame.cs" Line="35" Column="8" />
+      <File FileName="GameApp/Model/Player.cs" Line="44" Column="38" />
+      <File FileName="GameApp/View/Animation.cs" Line="120" Column="4" />
+      <File FileName="GameApp/View/parallaxingbackground.cs" Line="8" Column="36" />
+      <File FileName="GameApp/Controller/projectile.cs" Line="67" Column="4" />
+      <File FileName="GameApp/Model/enemy.cs" Line="7" Column="20" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+</Properties>

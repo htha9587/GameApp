@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-
+using GameApp.View;
 namespace GameApp.Model
 {
 	public class Player
