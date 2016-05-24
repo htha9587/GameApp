@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using GameApp.View;
+using GameApp.Controller;
 namespace GameApp.Model
 {
 	public class Enemy

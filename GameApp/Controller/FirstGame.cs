@@ -127,11 +127,15 @@ namespace GameApp.Controller
 			mainBackground = Content.Load<Texture2D>("mainbackground");
 			projectileTexture = Content.Load<Texture2D>("laser");
 			explosionTexture = Content.Load<Texture2D>("explosion");
+			projectileTexture = Content.Load<Texture2D> ("1108p80-chocolate-pudding-pops-x.jpg");
+			projectileTexture = Content.Load<Texture2D> ("bomb");
 			// Load the music
 			gameplayMusic = Content.Load<Song>("sound/gameMusic");
 
 			// Load the laser and explosion sound effect
 			laserSound = Content.Load<SoundEffect>("sound/laserFire");
+			//bombSound = Content.Load<SoundEffect> ("sound/laserFire");
+			//popSound = Content.Load<SoundEffect> ("sound/laserFire");
 			explosionSound = Content.Load<SoundEffect>("sound/explosion");
 
 			// Start the music right away
@@ -406,17 +410,17 @@ namespace GameApp.Controller
 		}
 		private void UpdateEnemies(GameTime gameTime)
 		{
-			// Spawn a new enemy enemy every 1.5 seconds
-			if (gameTime.TotalGameTime - previousSpawnTime > enemySpawnTime) 
-			{
-				previousSpawnTime = gameTime.TotalGameTime;
+			for (int i = enemies.Count - 1; i >= 0; i--) {
+				// Spawn a new enemy enemy every 1.5 seconds
+				if (gameTime.TotalGameTime - previousSpawnTime > enemySpawnTime) {
+					previousSpawnTime = gameTime.TotalGameTime;
 
-				// Add an Enemy
-				AddEnemy();
-				explosionSound.Play();
-				score += enemies[i].Value;
+					// Add an Enemy
+					AddEnemy ();
+					explosionSound.Play ();
+					score += enemies [i].Value;
+				}
 			}
-
 			// Update the Enemies
 			for (int i = enemies.Count - 1; i >= 0; i--) 
 			{
@@ -437,4 +441,3 @@ namespace GameApp.Controller
 		}
 	}
 }
-
