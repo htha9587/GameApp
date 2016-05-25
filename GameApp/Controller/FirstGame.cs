@@ -57,9 +57,11 @@ namespace GameApp.Controller
 		// A random number generator
 		Random random;
 		Texture2D projectileTexture;
+		Texture2D bombTexture;
+		Texture2D puddingTexture;
 		List<Projectile> projectiles;
-		List<puddingPop> puddingPop;
-		List<bomb> bomb;
+		List<puddingPop> puddingPops;
+		List<bomb> bombs;
 
 		// The rate of fire of the player laser
 		TimeSpan fireTime;
@@ -81,7 +83,7 @@ namespace GameApp.Controller
 		{
 			// TODO: Add your initialization logic here
             
-			base.Initialize ();
+
 			//Initializes player class.
 			player = new Player();
 			//Sets constant move speed.
@@ -101,11 +103,15 @@ namespace GameApp.Controller
 			// Initialize our random number generator
 			random = new Random();
 			projectiles = new List<Projectile>();
+			bombs = new List<bomb> ();
+			puddingPops = new List<puddingPop>();
 
 			// Set the laser to fire every quarter second
 			fireTime = TimeSpan.FromSeconds(.15f);
 			explosions = new List<Animation>();
 			score = 0;
+
+			base.Initialize ();
 		}
 
 		/// <summary>
@@ -131,8 +137,8 @@ namespace GameApp.Controller
 			mainBackground = Content.Load<Texture2D>("Texture/mainbackground");
 			projectileTexture = Content.Load<Texture2D>("Texture/laser");
 			explosionTexture = Content.Load<Texture2D>("Animation/explosion");
-			projectileTexture = Content.Load<Texture2D> ("Texture/puddingPop");
-			projectileTexture = Content.Load<Texture2D> ("Texture/bomb");
+			puddingTexture = Content.Load<Texture2D> ("Texture/puddingPop");
+			bombTexture = Content.Load<Texture2D> ("Texture/bomb");
 			// Load the music
 			gameplayMusic = Content.Load<Song>("Sound/gameMusic");
 
@@ -173,7 +179,7 @@ namespace GameApp.Controller
 			previousGamePadState = GamePad.GetState(PlayerIndex.One);
 				//Updates player.
 				UpdatePlayer(gameTime);
-			base.Update (gameTime);
+
 			// Update the parallaxing background
 			bgLayer1.Update();
 			bgLayer2.Update();
@@ -181,12 +187,16 @@ namespace GameApp.Controller
 			UpdateEnemies(gameTime);
 			// Update the collision
 			UpdateCollision();
+			UpdateBombs ();
+			UpdatePuddingPop ();
 			UpdateProjectiles ();
 			UpdateExplosions(gameTime);
 			UpdatePop ();
 			UpdateBomb ();
-			UpdatePuddingPop ();
-			UpdateBombs ();
+
+
+
+			base.Update (gameTime);
 		}
 
 		private void UpdatePlayer(GameTime gameTime)
@@ -230,13 +240,33 @@ namespace GameApp.Controller
 			player.Position.X = MathHelper.Clamp(player.Position.X, 0,GraphicsDevice.Viewport.Width - player.Width);
 			player.Position.Y = MathHelper.Clamp(player.Position.Y, 0,GraphicsDevice.Viewport.Height - player.Height);
 			// Fire only every interval we set as the fireTime
-			if (gameTime.TotalGameTime - previousFireTime > fireTime && currentKeyboardState.IsKeyDown(Keys.K) && currentKeyboardState.IsKeyDown(Keys.L))
+			if (gameTime.TotalGameTime - previousFireTime > fireTime && currentKeyboardState.IsKeyDown(Keys.K))
 			{
 				// Reset our current time
 				previousFireTime = gameTime.TotalGameTime;
 
 				// Add the projectile, but add it to the front and center of the player
 				AddProjectile(player.Position + new Vector2(player.Width / 2, 0));
+				// Play the laser sound
+				laserSound.Play();
+			}
+			if (gameTime.TotalGameTime - previousFireTime > fireTime && currentKeyboardState.IsKeyDown(Keys.Space))
+			{
+				// Reset our current time
+				previousFireTime = gameTime.TotalGameTime;
+
+				// Add the projectile, but add it to the front and center of the player
+				AddBomb(player.Position + new Vector2(player.Width / 2, 0));
+				// Play the laser sound
+				laserSound.Play();
+			}
+			if (gameTime.TotalGameTime - previousFireTime > fireTime && currentKeyboardState.IsKeyDown(Keys.Enter))
+			{
+				// Reset our current time
+				previousFireTime = gameTime.TotalGameTime;
+
+				// Add the projectile, but add it to the front and center of the player
+				AddPudding(player.Position + new Vector2(player.Width / 2, 0));
 				// Play the laser sound
 				laserSound.Play();
 			}
@@ -269,24 +299,25 @@ namespace GameApp.Controller
 			{
 				projectiles[i].Draw(spriteBatch);
 			}
-			for (int i = 0; i < puddingPop.Count; i++)
+			for (int i = 0; i < puddingPops.Count; i++)
 			{
-				puddingPop[i].Draw(spriteBatch);
+				puddingPops[i].Draw(spriteBatch);
 			}
-			for (int i = 0; i < bomb.Count; i++)
+			for (int i = 0; i < bombs.Count; i++)
 			{
-				bomb[i].Draw(spriteBatch);
+				bombs[i].Draw(spriteBatch);
 			}
 			for (int i = 0; i < explosions.Count; i++)
 			{
 				explosions[i].Draw(spriteBatch);
 			}
-			spriteBatch.End();
 			// Draw the score
 			spriteBatch.DrawString(font, "score: " + score, new Vector2(GraphicsDevice.Viewport.TitleSafeArea.X, GraphicsDevice.Viewport.TitleSafeArea.Y), Color.White);
 			// Draw the player health
 			spriteBatch.DrawString(font, "health: " + player.Health, new Vector2(GraphicsDevice.Viewport.TitleSafeArea.X, GraphicsDevice.Viewport.TitleSafeArea.Y + 30), Color.White);
 			// Draw the Projectiles
+
+			spriteBatch.End();
 
             
 			//TODO: Add your drawing co		de here
@@ -329,26 +360,26 @@ namespace GameApp.Controller
 		private void UpdatePop()
 		{
 			// Update the Projectiles
-			for (int i = puddingPop.Count - 1; i >= 0; i--) 
+			for (int i = puddingPops.Count - 1; i >= 0; i--) 
 			{
-				puddingPop[i].Update();
+				puddingPops[i].Update();
 
-				if (puddingPop[i].Active == false)
+				if (puddingPops[i].Active == false)
 				{
-					puddingPop.RemoveAt(i);
+					puddingPops.RemoveAt(i);
 				} 
 			}
 		}
 		private void UpdateBomb()
 		{
 			// Update the Projectiles
-			for (int i = bomb.Count - 1; i >= 0; i--) 
+			for (int i = bombs.Count - 1; i >= 0; i--) 
 			{
-				bomb[i].Update();
+				bombs[i].Update();
 
-				if (bomb[i].Active == false)
+				if (bombs[i].Active == false)
 				{
-					bomb.RemoveAt(i);
+					bombs.RemoveAt(i);
 				} 
 			}
 		}
@@ -364,29 +395,7 @@ namespace GameApp.Controller
 				(int)player.Position.Y,
 				player.Width,
 				player.Height);
-			// Projectile vs Enemy Collision
-			for (int i = 0; i < projectiles.Count; i++)
-			{
-				for (int j = 0; j < enemies.Count; j++) 
-				{
-					
-					// Create the rectangles we need to determine if we collided with each other
-					rectangle1 = new Rectangle ((int)projectiles [i].Position.X -
-					projectiles [i].Width / 2, (int)projectiles [i].Position.Y -
-					projectiles [i].Height / 2, projectiles [i].Width, projectiles [i].Height);
-
-					rectangle2 = new Rectangle ((int)enemies [j].Position.X - enemies [j].Width / 2,
-						(int)enemies [j].Position.Y - enemies [j].Height / 2,
-						enemies [j].Width, enemies [j].Height);
-
-					// Determine if the two objects collided with each other
-					if (rectangle1.Intersects (rectangle2)) 
-					{
-						enemies [j].Health -= projectiles [i].Damage;
-						projectiles [i].Active = false;
-					}
-				}
-			}
+			
 			// Do the collision between the player and the enemies
 			for (int i = 0; i <enemies.Count; i++)
 			{
@@ -414,6 +423,29 @@ namespace GameApp.Controller
 
 
 				}
+			// Projectile vs Enemy Collision
+			for (int i = 0; i < projectiles.Count; i++)
+			{
+				for (int j = 0; j < enemies.Count; j++) 
+				{
+
+					// Create the rectangles we need to determine if we collided with each other
+					rectangle1 = new Rectangle ((int)projectiles [i].Position.X -
+						projectiles [i].Width / 2, (int)projectiles [i].Position.Y -
+						projectiles [i].Height / 2, projectiles [i].Width, projectiles [i].Height);
+
+					rectangle2 = new Rectangle ((int)enemies [j].Position.X - enemies [j].Width / 2,
+						(int)enemies [j].Position.Y - enemies [j].Height / 2,
+						enemies [j].Width, enemies [j].Height);
+
+					// Determine if the two objects collided with each other
+					if (rectangle1.Intersects (rectangle2)) 
+					{
+						enemies [j].Health -= projectiles [i].Damage;
+						projectiles [i].Active = false;
+					}
+				}
+			}
 
 
 		}
@@ -430,15 +462,15 @@ namespace GameApp.Controller
 				player.Width,
 				player.Height);
 			// Projectile vs Enemy Collision
-			for (int i = 0; i < puddingPop.Count; i++)
+			for (int i = 0; i < puddingPops.Count; i++)
 			{
 				for (int j = 0; j < enemies.Count; j++) 
 				{
 
 					// Create the rectangles we need to determine if we collided with each other
-					rectangle1 = new Rectangle ((int)puddingPop [i].Position.X -
-						puddingPop [i].Width / 2, (int)puddingPop [i].Position.Y -
-						puddingPop [i].Height / 2, puddingPop [i].Width, puddingPop [i].Height);
+					rectangle1 = new Rectangle ((int)puddingPops [i].Position.X -
+						puddingPops [i].Width / 2, (int)puddingPops [i].Position.Y -
+						puddingPops [i].Height / 2, puddingPops [i].Width, puddingPops [i].Height);
 
 					rectangle2 = new Rectangle ((int)enemies [j].Position.X - enemies [j].Width / 2,
 						(int)enemies [j].Position.Y - enemies [j].Height / 2,
@@ -447,8 +479,10 @@ namespace GameApp.Controller
 					// Determine if the two objects collided with each other
 					if (rectangle1.Intersects (rectangle2)) 
 					{
-						enemies [j].Health -= projectiles [i].Damage;
-						projectiles [i].Active = false;
+
+
+						enemies [j].Health -= puddingPops [i].Damage;
+						puddingPops [i].Active = false;
 					}
 				}
 			}
@@ -489,21 +523,17 @@ namespace GameApp.Controller
 			Rectangle rectangle1;
 			Rectangle rectangle2;
 
-			// Only create the rectangle once for the player
-			rectangle1 = new Rectangle((int)player.Position.X,
-				(int)player.Position.Y,
-				player.Width,
-				player.Height);
+
 			// Projectile vs Enemy Collision
-			for (int i = 0; i < bomb.Count; i++)
+			for (int i = 0; i < bombs.Count; i++)
 			{
 				for (int j = 0; j < enemies.Count; j++) 
 				{
 
 					// Create the rectangles we need to determine if we collided with each other
-					rectangle1 = new Rectangle ((int)bomb [i].Position.X -
-						bomb [i].Width / 2, (int)bomb [i].Position.Y -
-						bomb [i].Height / 2, bomb [i].Width, bomb [i].Height);
+					rectangle1 = new Rectangle ((int)bombs [i].Position.X -
+						bombs [i].Width / 2, (int)bombs [i].Position.Y -
+						bombs [i].Height / 2, bombs [i].Width, bombs [i].Height);
 
 					rectangle2 = new Rectangle ((int)enemies [j].Position.X - enemies [j].Width / 2,
 						(int)enemies [j].Position.Y - enemies [j].Height / 2,
@@ -512,38 +542,12 @@ namespace GameApp.Controller
 					// Determine if the two objects collided with each other
 					if (rectangle1.Intersects (rectangle2)) 
 					{
-						enemies [j].Health -= projectiles [i].Damage;
-						projectiles [i].Active = false;
+   						enemies [j].Health -= bombs [i].Damage;
+						bombs [i].Active = false;
 					}
 				}
 			}
-			// Do the collision between the player and the enemies
-			for (int i = 0; i <enemies.Count; i++)
-			{
-				rectangle2 = new Rectangle((int)enemies[i].Position.X,
-					(int)enemies[i].Position.Y,
-					enemies[i].Width,
-					enemies[i].Height);
 
-				// Determine if the two objects collided with each
-				// other
-				if(rectangle1.Intersects(rectangle2))
-				{
-					// Subtract the health from the player based on
-					// the enemy damage
-					player.Health -= enemies[i].Damage;
-
-					// Since the enemy collided with the player
-					// destroy it
-					enemies[i].Health = 0;
-
-					// If the player health is less than zero we died
-					if (player.Health <= 0)
-						player.Active = false; 
-				}
-
-
-			}
 
 
 		}
@@ -584,19 +588,30 @@ namespace GameApp.Controller
 			projectile.Initialize(GraphicsDevice.Viewport, projectileTexture,position); 
 			projectiles.Add(projectile);
 		}
+		private void AddBomb(Vector2 position)
+		{
+			bomb bomb = new bomb(); 
+			bomb.Initialize(GraphicsDevice.Viewport, bombTexture,position); 
+			bombs.Add(bomb);
+		}
+		private void AddPudding(Vector2 position)
+		{
+			puddingPop puddingPop = new puddingPop(); 
+			puddingPop.Initialize(GraphicsDevice.Viewport, puddingTexture,position); 
+			puddingPops.Add(puddingPop);
+		}
 		private void UpdateEnemies(GameTime gameTime)
 		{
-			for (int i = enemies.Count - 1; i >= 0; i--) {
+			
 				// Spawn a new enemy enemy every 1.5 seconds
 				if (gameTime.TotalGameTime - previousSpawnTime > enemySpawnTime) {
 					previousSpawnTime = gameTime.TotalGameTime;
 
 					// Add an Enemy
 					AddEnemy ();
-					explosionSound.Play ();
-					score += enemies [i].Value;
+
 				}
-			}
+
 			// Update the Enemies
 			for (int i = enemies.Count - 1; i >= 0; i--) 
 			{
