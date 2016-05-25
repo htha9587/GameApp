@@ -20,7 +20,7 @@ namespace GameApp.Controller
 		private Player player; //Represents player.
 		//Keyboard states to determine pressing.
 		KeyboardState currentKeyboardState;
-		KeyboardState previousKeyboardState;
+		//KeyboardState previousKeyboardState;
 		//Gamepad states to determine pressing.
 		GamePadState currentGamePadState;
 		GamePadState previousGamePadState;
@@ -38,6 +38,8 @@ namespace GameApp.Controller
 		List<Enemy> enemies;
 		// The sound that is played when a laser is fired
 		SoundEffect laserSound;
+		//SoundEffect bombSound;
+		//SoundEffect popSound;
 
 		// The sound used when the player or an enemy dies
 		SoundEffect explosionSound;
@@ -56,6 +58,8 @@ namespace GameApp.Controller
 		Random random;
 		Texture2D projectileTexture;
 		List<Projectile> projectiles;
+		List<puddingPop> puddingPop;
+		List<bomb> bomb;
 
 		// The rate of fire of the player laser
 		TimeSpan fireTime;
@@ -114,32 +118,32 @@ namespace GameApp.Controller
 			spriteBatch = new SpriteBatch (GraphicsDevice);
 			// Load the player resources
 			Animation playerAnimation = new Animation();
-			Texture2D playerTexture = Content.Load<Texture2D>("shipAnimation");
+			Texture2D playerTexture = Content.Load<Texture2D>("Animation/shipAnimation");
 			playerAnimation.Initialize(playerTexture, Vector2.Zero, 115, 69, 8, 30, Color.White, 1f, true);
 
 			Vector2 playerPosition = new Vector2 (GraphicsDevice.Viewport.TitleSafeArea.X, GraphicsDevice.Viewport.TitleSafeArea.Y
 				+ GraphicsDevice.Viewport.TitleSafeArea.Height / 2);
 			player.Initialize(playerAnimation, playerPosition);
 			// Load the parallaxing background
-			bgLayer1.Initialize(Content, "bgLayer1", GraphicsDevice.Viewport.Width, -1);
-			bgLayer2.Initialize(Content, "bgLayer2", GraphicsDevice.Viewport.Width, -2);
-			enemyTexture = Content.Load<Texture2D>("mineAnimation");
-			mainBackground = Content.Load<Texture2D>("mainbackground");
-			projectileTexture = Content.Load<Texture2D>("laser");
-			explosionTexture = Content.Load<Texture2D>("explosion");
-			projectileTexture = Content.Load<Texture2D> ("1108p80-chocolate-pudding-pops-x.jpg");
-			projectileTexture = Content.Load<Texture2D> ("bomb");
+			bgLayer1.Initialize(Content, "Texture/bgLayer1", GraphicsDevice.Viewport.Width, -1);
+			bgLayer2.Initialize(Content, "Texture/bgLayer2", GraphicsDevice.Viewport.Width, -2);
+			enemyTexture = Content.Load<Texture2D>("Animation/mineAnimation");
+			mainBackground = Content.Load<Texture2D>("Texture/mainbackground");
+			projectileTexture = Content.Load<Texture2D>("Texture/laser");
+			explosionTexture = Content.Load<Texture2D>("Animation/explosion");
+			projectileTexture = Content.Load<Texture2D> ("Texture/puddingPop");
+			projectileTexture = Content.Load<Texture2D> ("Texture/bomb");
 			// Load the music
-			gameplayMusic = Content.Load<Song>("sound/gameMusic");
+			gameplayMusic = Content.Load<Song>("Sound/gameMusic");
 
 			// Load the laser and explosion sound effect
-			laserSound = Content.Load<SoundEffect>("sound/laserFire");
-			//bombSound = Content.Load<SoundEffect> ("sound/laserFire");
-			//popSound = Content.Load<SoundEffect> ("sound/laserFire");
-			explosionSound = Content.Load<SoundEffect>("sound/explosion");
+			laserSound = Content.Load<SoundEffect>("Sound/laserFire");
+			//bombSound = Content.Load<SoundEffect> ("Sound/laserFire");
+			//popSound = Content.Load<SoundEffect> ("Sound/laserFire");
+			explosionSound = Content.Load<SoundEffect>("Sound/explosion");
 
 			// Start the music right away
-			font = Content.Load<SpriteFont>("gameFont");
+			font = Content.Load<SpriteFont>("Font/gameFont");
 			PlayMusic(gameplayMusic);
 
 			//TODO: use this.Content to load your game content here 
@@ -161,10 +165,12 @@ namespace GameApp.Controller
             
 			//Saves previous keyboard state and gamepad to determine user presses.
 			previousGamePadState = currentGamePadState;
-			previousKeyboardState = currentKeyboardState;
+			//previousKeyboardState = currentKeyboardState;
             // Reads the current state and stores it.
 			currentKeyboardState = Keyboard.GetState();
 			currentGamePadState = GamePad.GetState(PlayerIndex.One);
+			//previousKeyboardState = Keyboard.GetState();
+			previousGamePadState = GamePad.GetState(PlayerIndex.One);
 				//Updates player.
 				UpdatePlayer(gameTime);
 			base.Update (gameTime);
@@ -177,6 +183,10 @@ namespace GameApp.Controller
 			UpdateCollision();
 			UpdateProjectiles ();
 			UpdateExplosions(gameTime);
+			UpdatePop ();
+			UpdateBomb ();
+			UpdatePuddingPop ();
+			UpdateBombs ();
 		}
 
 		private void UpdatePlayer(GameTime gameTime)
@@ -185,6 +195,8 @@ namespace GameApp.Controller
 			//Get thumbstick controls.
 			player.Position.X += currentGamePadState.ThumbSticks.Left.X *playerMoveSpeed;
 			player.Position.Y -= currentGamePadState.ThumbSticks.Left.Y *playerMoveSpeed;
+			player.Position.X += previousGamePadState.ThumbSticks.Left.X *playerMoveSpeed;
+			player.Position.Y -= previousGamePadState.ThumbSticks.Left.Y *playerMoveSpeed;
 
 			// Use the Keyboard / Dpad
 			if (currentKeyboardState.IsKeyDown(Keys.Left) ||
@@ -218,7 +230,7 @@ namespace GameApp.Controller
 			player.Position.X = MathHelper.Clamp(player.Position.X, 0,GraphicsDevice.Viewport.Width - player.Width);
 			player.Position.Y = MathHelper.Clamp(player.Position.Y, 0,GraphicsDevice.Viewport.Height - player.Height);
 			// Fire only every interval we set as the fireTime
-			if (gameTime.TotalGameTime - previousFireTime > fireTime)
+			if (gameTime.TotalGameTime - previousFireTime > fireTime && currentKeyboardState.IsKeyDown(Keys.K) && currentKeyboardState.IsKeyDown(Keys.L))
 			{
 				// Reset our current time
 				previousFireTime = gameTime.TotalGameTime;
@@ -256,6 +268,14 @@ namespace GameApp.Controller
 			for (int i = 0; i < projectiles.Count; i++)
 			{
 				projectiles[i].Draw(spriteBatch);
+			}
+			for (int i = 0; i < puddingPop.Count; i++)
+			{
+				puddingPop[i].Draw(spriteBatch);
+			}
+			for (int i = 0; i < bomb.Count; i++)
+			{
+				bomb[i].Draw(spriteBatch);
 			}
 			for (int i = 0; i < explosions.Count; i++)
 			{
@@ -303,6 +323,32 @@ namespace GameApp.Controller
 				if (projectiles[i].Active == false)
 				{
 					projectiles.RemoveAt(i);
+				} 
+			}
+		}
+		private void UpdatePop()
+		{
+			// Update the Projectiles
+			for (int i = puddingPop.Count - 1; i >= 0; i--) 
+			{
+				puddingPop[i].Update();
+
+				if (puddingPop[i].Active == false)
+				{
+					puddingPop.RemoveAt(i);
+				} 
+			}
+		}
+		private void UpdateBomb()
+		{
+			// Update the Projectiles
+			for (int i = bomb.Count - 1; i >= 0; i--) 
+			{
+				bomb[i].Update();
+
+				if (bomb[i].Active == false)
+				{
+					bomb.RemoveAt(i);
 				} 
 			}
 		}
@@ -368,6 +414,136 @@ namespace GameApp.Controller
 
 
 				}
+
+
+		}
+		private void UpdatePuddingPop()
+		{
+			// Use the Rectangle's built-in intersect function to 
+			// determine if two objects are overlapping
+			Rectangle rectangle1;
+			Rectangle rectangle2;
+
+			// Only create the rectangle once for the player
+			rectangle1 = new Rectangle((int)player.Position.X,
+				(int)player.Position.Y,
+				player.Width,
+				player.Height);
+			// Projectile vs Enemy Collision
+			for (int i = 0; i < puddingPop.Count; i++)
+			{
+				for (int j = 0; j < enemies.Count; j++) 
+				{
+
+					// Create the rectangles we need to determine if we collided with each other
+					rectangle1 = new Rectangle ((int)puddingPop [i].Position.X -
+						puddingPop [i].Width / 2, (int)puddingPop [i].Position.Y -
+						puddingPop [i].Height / 2, puddingPop [i].Width, puddingPop [i].Height);
+
+					rectangle2 = new Rectangle ((int)enemies [j].Position.X - enemies [j].Width / 2,
+						(int)enemies [j].Position.Y - enemies [j].Height / 2,
+						enemies [j].Width, enemies [j].Height);
+
+					// Determine if the two objects collided with each other
+					if (rectangle1.Intersects (rectangle2)) 
+					{
+						enemies [j].Health -= projectiles [i].Damage;
+						projectiles [i].Active = false;
+					}
+				}
+			}
+			// Do the collision between the player and the enemies
+			for (int i = 0; i <enemies.Count; i++)
+			{
+				rectangle2 = new Rectangle((int)enemies[i].Position.X,
+					(int)enemies[i].Position.Y,
+					enemies[i].Width,
+					enemies[i].Height);
+
+				// Determine if the two objects collided with each
+				// other
+				if(rectangle1.Intersects(rectangle2))
+				{
+					// Subtract the health from the player based on
+					// the enemy damage
+					player.Health -= enemies[i].Damage;
+
+					// Since the enemy collided with the player
+					// destroy it
+					enemies[i].Health = 0;
+
+					// If the player health is less than zero we died
+					if (player.Health <= 0)
+						player.Active = false; 
+				}
+
+
+			}
+
+
+		}
+		private void UpdateBombs()
+		{
+			// Use the Rectangle's built-in intersect function to 
+			// determine if two objects are overlapping
+			Rectangle rectangle1;
+			Rectangle rectangle2;
+
+			// Only create the rectangle once for the player
+			rectangle1 = new Rectangle((int)player.Position.X,
+				(int)player.Position.Y,
+				player.Width,
+				player.Height);
+			// Projectile vs Enemy Collision
+			for (int i = 0; i < bomb.Count; i++)
+			{
+				for (int j = 0; j < enemies.Count; j++) 
+				{
+
+					// Create the rectangles we need to determine if we collided with each other
+					rectangle1 = new Rectangle ((int)bomb [i].Position.X -
+						bomb [i].Width / 2, (int)bomb [i].Position.Y -
+						bomb [i].Height / 2, bomb [i].Width, bomb [i].Height);
+
+					rectangle2 = new Rectangle ((int)enemies [j].Position.X - enemies [j].Width / 2,
+						(int)enemies [j].Position.Y - enemies [j].Height / 2,
+						enemies [j].Width, enemies [j].Height);
+
+					// Determine if the two objects collided with each other
+					if (rectangle1.Intersects (rectangle2)) 
+					{
+						enemies [j].Health -= projectiles [i].Damage;
+						projectiles [i].Active = false;
+					}
+				}
+			}
+			// Do the collision between the player and the enemies
+			for (int i = 0; i <enemies.Count; i++)
+			{
+				rectangle2 = new Rectangle((int)enemies[i].Position.X,
+					(int)enemies[i].Position.Y,
+					enemies[i].Width,
+					enemies[i].Height);
+
+				// Determine if the two objects collided with each
+				// other
+				if(rectangle1.Intersects(rectangle2))
+				{
+					// Subtract the health from the player based on
+					// the enemy damage
+					player.Health -= enemies[i].Damage;
+
+					// Since the enemy collided with the player
+					// destroy it
+					enemies[i].Health = 0;
+
+					// If the player health is less than zero we died
+					if (player.Health <= 0)
+						player.Active = false; 
+				}
+
+
+			}
 
 
 		}
