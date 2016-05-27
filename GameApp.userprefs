@@ -2,10 +2,13 @@
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|x86" />
   <MonoDevelop.Ide.Workbench ActiveDocument="GameApp/Controller/FirstGame.cs">
     <Files>
-      <File FileName="GameApp/Controller/FirstGame.cs" Line="191" Column="81" />
+      <File FileName="GameApp/Controller/FirstGame.cs" Line="485" Column="18" />
       <File FileName="GameApp/Model/puddingPop.cs" Line="59" Column="4" />
-      <File FileName="GameApp/Model/bomb.cs" Line="69" Column="12" />
+      <File FileName="GameApp/Model/bomb.cs" Line="36" Column="23" />
       <File FileName="GameApp/Model/projectile.cs" Line="36" Column="34" />
+      <File FileName="GameApp/Controller/Program.cs" Line="30" Column="18" />
+      <File FileName="GameApp/Model/Enemy.cs" Line="1" Column="1" />
+      <File FileName="GameApp/Model/Player.cs" Line="1" Column="1" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

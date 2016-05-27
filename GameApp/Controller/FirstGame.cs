@@ -58,10 +58,12 @@ namespace GameApp.Controller
 		Random random;
 		Texture2D projectileTexture;
 		Texture2D bombTexture;
+		Texture2D realityCheckTexture;
 		Texture2D puddingTexture;
 		List<Projectile> projectiles;
 		List<puddingPop> puddingPops;
 		List<bomb> bombs;
+		List<realityCheck> checks;
 
 		// The rate of fire of the player laser
 		TimeSpan fireTime;
@@ -105,7 +107,7 @@ namespace GameApp.Controller
 			projectiles = new List<Projectile>();
 			bombs = new List<bomb> ();
 			puddingPops = new List<puddingPop>();
-
+			checks = new List<realityCheck>();
 			// Set the laser to fire every quarter second
 			fireTime = TimeSpan.FromSeconds(.15f);
 			explosions = new List<Animation>();
@@ -139,6 +141,7 @@ namespace GameApp.Controller
 			explosionTexture = Content.Load<Texture2D>("Animation/explosion");
 			puddingTexture = Content.Load<Texture2D> ("Texture/puddingPop");
 			bombTexture = Content.Load<Texture2D> ("Texture/bomb");
+			realityCheckTexture = Content.Load<Texture2D> ("Texture/realityCheck");
 			// Load the music
 			gameplayMusic = Content.Load<Song>("Sound/gameMusic");
 
@@ -193,7 +196,8 @@ namespace GameApp.Controller
 			UpdateExplosions(gameTime);
 			UpdatePop ();
 			UpdateBomb ();
-
+			UpdateChecks();
+			UpdateCheck();
 
 
 			base.Update (gameTime);
@@ -270,6 +274,16 @@ namespace GameApp.Controller
 				// Play the laser sound
 				laserSound.Play();
 			}
+			if (gameTime.TotalGameTime - previousFireTime > fireTime && currentKeyboardState.IsKeyDown(Keys.R))
+			{
+				// Reset our current time
+				previousFireTime = gameTime.TotalGameTime;
+
+				// Add the projectile, but add it to the front and center of the player
+				AddCheck(player.Position + new Vector2(player.Width / 2, 0));
+				// Play the laser sound
+				laserSound.Play();
+			}
 		}
 
 
@@ -306,6 +320,10 @@ namespace GameApp.Controller
 			for (int i = 0; i < bombs.Count; i++)
 			{
 				bombs[i].Draw(spriteBatch);
+			}
+			for (int i = 0; i < checks.Count; i++)
+			{
+				checks[i].Draw(spriteBatch);
 			}
 			for (int i = 0; i < explosions.Count; i++)
 			{
@@ -380,6 +398,19 @@ namespace GameApp.Controller
 				if (bombs[i].Active == false)
 				{
 					bombs.RemoveAt(i);
+				} 
+			}
+		}
+		private void UpdateCheck()
+		{
+			// Update the Projectiles
+			for (int i = checks.Count - 1; i >= 0; i--) 
+			{
+				checks[i].Update();
+
+				if (checks[i].Active == false)
+				{
+					checks.RemoveAt(i);
 				} 
 			}
 		}
@@ -525,30 +556,57 @@ namespace GameApp.Controller
 
 
 			// Projectile vs Enemy Collision
-			for (int i = 0; i < bombs.Count; i++)
-			{
-				for (int j = 0; j < enemies.Count; j++) 
-				{
+			for (int i = 0; i < bombs.Count; i++) {
+				for (int j = 0; j < enemies.Count; j++) {
 
 					// Create the rectangles we need to determine if we collided with each other
 					rectangle1 = new Rectangle ((int)bombs [i].Position.X -
-						bombs [i].Width / 2, (int)bombs [i].Position.Y -
-						bombs [i].Height / 2, bombs [i].Width, bombs [i].Height);
+					bombs [i].Width / 2, (int)bombs [i].Position.Y -
+					bombs [i].Height / 2, bombs [i].Width, bombs [i].Height);
 
 					rectangle2 = new Rectangle ((int)enemies [j].Position.X - enemies [j].Width / 2,
 						(int)enemies [j].Position.Y - enemies [j].Height / 2,
 						enemies [j].Width, enemies [j].Height);
 
 					// Determine if the two objects collided with each other
-					if (rectangle1.Intersects (rectangle2)) 
-					{
-   						enemies [j].Health -= bombs [i].Damage;
+					if (rectangle1.Intersects (rectangle2)) {
+						enemies [j].Health -= bombs [i].Damage;
 						bombs [i].Active = false;
 					}
 				}
 			}
+		}
+			private void UpdateChecks()
+			{
+				// Use the Rectangle's built-in intersect function to 
+				// determine if two objects are overlapping
+				Rectangle rectangle1;
+				Rectangle rectangle2;
 
 
+				// Projectile vs Enemy Collision
+				for (int i = 0; i < checks.Count; i++)
+				{
+					for (int j = 0; j < enemies.Count; j++) 
+					{
+
+						// Create the rectangles we need to determine if we collided with each other
+						rectangle1 = new Rectangle ((int)checks [i].Position.X -
+							checks [i].Width / 2, (int)checks [i].Position.Y -
+							checks [i].Height / 2, checks [i].Width, checks [i].Height);
+
+						rectangle2 = new Rectangle ((int)enemies [j].Position.X - enemies [j].Width / 2,
+							(int)enemies [j].Position.Y - enemies [j].Height / 2,
+							enemies [j].Width, enemies [j].Height);
+
+						// Determine if the two objects collided with each other
+						if (rectangle1.Intersects (rectangle2)) 
+						{
+							enemies [j].Health -= checks [i].Damage;
+							checks [i].Active = false;
+						}
+					}
+				}
 
 		}
 		private void AddExplosion(Vector2 position)
@@ -593,6 +651,12 @@ namespace GameApp.Controller
 			bomb bomb = new bomb(); 
 			bomb.Initialize(GraphicsDevice.Viewport, bombTexture,position); 
 			bombs.Add(bomb);
+		}
+		private void AddCheck(Vector2 position)
+		{
+			realityCheck check = new realityCheck(); 
+			check.Initialize(GraphicsDevice.Viewport, realityCheckTexture,position); 
+			checks.Add(check);
 		}
 		private void AddPudding(Vector2 position)
 		{
